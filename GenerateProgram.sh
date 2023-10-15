@@ -1,7 +1,7 @@
 #!bin/bash
 
 # Luan Carlos Maia Cruz - GRR 20203891
-# Felipe Noleto - GRR
+# Felipe Augusto Dittert Noleto - GRR20205689
 
 # Script para gerar o executavel
 as OwnAllocator.s -o OwnAllocator.o -g
