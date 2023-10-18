@@ -3,7 +3,10 @@
     BRK_ATUAL: .quad 0
 
 .section .text
-.global _start
+.global setup_brk
+.global dismiss_brk
+# .globl memory_alloc
+.global memory_free
 
 setup_brk:
 # Obtém o endereço de brk
@@ -12,7 +15,7 @@ setup_brk:
     movq %rsp, %rbp     
     
     movq $12, %rax          # Syscall para o brk
-    movq $0 %rdi            # Retorna Endereço Atual  
+    movq $0 , %rdi            # Retorna Endereço Atual  
     syscall
 
     movq %rax, BRK_ATUAL
@@ -66,11 +69,9 @@ memory_free:
     pushq %rbp
     movq %rsp, %rbp
 
-    movq 16(%rbp),
-    movq $0, -16(%rbx) # Seta flag de uso do bloco como livre 
-    movq $0, %rax
+    movq %rdi, %rbx
+    subq $16, %rbx # Seta flag de uso do bloco como livre 
+    movq $0, (%rbx)
 
     popq %rbp
     ret
-
-_start:
