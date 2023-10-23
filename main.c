@@ -9,19 +9,19 @@ int main()
 
     setup_brk();
 
-    // a = memory_alloc(50);
+    // a = (void *) memory_alloc(50);
     printHeap();
 
-    // b = memory_alloc(100);
+    // b = (void *) memory_alloc(100);
     printHeap();
 
-    // c = memory_alloc(200);
+    // c = (void *) memory_alloc(200);
     printHeap();
 
-    // d = memory_alloc(250);
+    // d = (void *) memory_alloc(250);
     printHeap();
 
-    // e = memory_alloc(300);
+    // e = (void *) memory_alloc(300);
     printHeap();
 
     // memory_free(b);

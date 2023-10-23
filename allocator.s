@@ -3,19 +3,43 @@
     BRK_ATUAL: .quad 0
 
 .section .text
+.global get_brk
+.global update_brk
 .global setup_brk
 .global dismiss_brk
-# .globl memory_alloc
+.global memory_alloc
 .global memory_free
 
+# Retorna o endereço atual de brk
+get_brk:
+    pushq %rbp
+    movq %rsp, %rbp
+    movq $12, %rax              # Syscall para brk
+    movq $0 , %rdi              # Retorna Endereço Atual  
+    syscall
+    popq %rbp
+    ret 
+
+# Atualiza o endereço de brk, o valor de do registrado %rdi deve ser atualizado antes 
+update_brk:
+    pushq %rbp
+    movq %rsp, %rbp
+    movq $12, %rax              # Syscall para brk
+    syscall
+    popq %rbp
+    ret
+
+
+
 setup_brk:
-# Obtém o endereço de brk
+# Executa a syscall de TOPO para obter o endereço do topo correte da heap 
+# e o armazena em BRK_INICIAL e BRK_ATUAL
     
     pushq %rbp           
     movq %rsp, %rbp     
     
-    movq $12, %rax          # Syscall para o brk
-    movq $0 , %rdi            # Retorna Endereço Atual  
+    movq $12, %rax              # Syscall para brk
+    movq $0 , %rdi              # Retorna Endereço Atual  
     syscall
 
     movq %rax, BRK_ATUAL
@@ -25,12 +49,12 @@ setup_brk:
     ret
 
 dismiss_brk:
-# Restaura o endereço de brk
+# 
     pushq %rbp
     movq %rsp, %rbp
 
-    movq $12, %rax          # Syscall para o brk
-    movq BRK_INICIAL, %rdi  # Restaura o endereço de brk
+    movq $12, %rax              # Syscall para brk
+    movq BRK_INICIAL, %rdi      # Restaura o endereço de BRK_INICIAL para brk
     syscall
 
     popq %rbp
@@ -38,7 +62,7 @@ dismiss_brk:
 
 memory_alloc:
 
-# BRK_INICIAL = setup_brk();
+# BRK_INICIAL = setup_TOPO();
 
 # 1. Procura bloco livre com tamanho igual ou maior que a requisição
     # a partir do BRK_INICIAL até o BRK_ATUAL, percorrer heap, checar tamanho e se esta livre
@@ -72,6 +96,28 @@ memory_free:
     movq %rdi, %rbx
     subq $16, %rbx # Seta flag de uso do bloco como livre 
     movq $0, (%rbx)
+
+    # Ajusta os blocos livres
+
+    popq %rbp
+    ret
+
+
+
+print_heap:
+# Imprime o estado atual da memória
+# Percorre a heap, imprimindo o estado de cada bloco
+
+    pushq %rbp
+    movq %rsp, %rbp
+
+
+    movq BRK_ATUAL, %rax
+    movq BRK_INICIAL, %rbx
+
+        
+
+    call printf
 
     popq %rbp
     ret

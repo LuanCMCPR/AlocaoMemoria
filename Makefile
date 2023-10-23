@@ -31,3 +31,17 @@ clean:
 compact:
 	@echo "Compactando arquivos..."
 	tar -czvf $(DIR).tar.gz $(addprefix ../$(DIR)/, $(FILES))
+
+
+
+
+
+
+
+
+
+
+
+
+
+#https://github.com/sulzbals/malloc/blob/master/src/malloc.s
