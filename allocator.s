@@ -3,12 +3,20 @@ BRK_INICIAL: .quad 0
 BRK_ATUAL: .quad 0
 
 .section .text
+.global get_brk
 .global setup_brk
 .global dismiss_brk
 .global memory_alloc
 .global memory_free
-.global print_heap
-.global print
+
+get_brk:
+  pushq   %rbp                  # Empilha endereco-base do registro de ativacao antigo
+  movq    %rsp, %rbp            # Atualiza ponteiro para endereco-base do registro de ativacao atual
+  movq    $12, %rax             # ID do servico brk
+  movq    $0, %rdi              # Parametro da chamada (de modo a retornar a altura atual da brk)
+  syscall                       # Chamada ao sistema
+  popq    %rbp                  # Desmonta registro de ativacao atual e restaura ponteiro para o antigo
+  ret                           # Retorna
 
 setup_brk:
   pushq   %rbp                  # Empilha Endereço Base
@@ -59,7 +67,7 @@ memory_free:
   je      exit
   cmpq    BRK_INICIAL, %rbx     # Compara se endereco passado é menor que o BRK_INICIAL
   jl      exit
-  #call   get_brk               # Obtem o valor atual de brk
+  call   get_brk               # Obtem o valor atual de brk
   cmpq    %rax, %rbx            # Compara se Endereco passado é maior que o BRK_ATUAL
   jg      exit                  
   movq    $0, -16(%rdi)         # Zera o USO do bloco   
