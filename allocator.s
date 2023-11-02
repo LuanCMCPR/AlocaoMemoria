@@ -1,67 +1,54 @@
 .section .data
-    BRK_INICIAL: .quad 0
-    BRK_ATUAL: .quad 0
+BRK_INICIAL: .quad 0
+BRK_ATUAL: .quad 0
+IN_USE: .string "+"
+NOT_IN_USE: .string "-"
 
 .section .text
-.global get_brk
-.global update_brk
 .global setup_brk
 .global dismiss_brk
 .global memory_alloc
 .global memory_free
-
-# Retorna o endereço atual de brk
-get_brk:
-    pushq %rbp
-    movq %rsp, %rbp
-    movq $12, %rax              # Syscall para brk
-    movq $0 , %rdi              # Retorna Endereço Atual  
-    syscall
-    popq %rbp
-    ret 
-
-# Atualiza o endereço de brk, o valor de do registrado %rdi deve ser atualizado antes 
-update_brk:
-    pushq %rbp
-    movq %rsp, %rbp
-    movq $12, %rax              # Syscall para brk
-    syscall
-    popq %rbp
-    ret
-
-
+.global print_heap
+.global print
 
 setup_brk:
-# Executa a syscall de TOPO para obter o endereço do topo correte da heap 
-# e o armazena em BRK_INICIAL e BRK_ATUAL
-    
-    pushq %rbp           
-    movq %rsp, %rbp     
-    
-    movq $12, %rax              # Syscall para brk
-    movq $0 , %rdi              # Retorna Endereço Atual  
-    syscall
+# Executa a syscall de brk para obter o endereço atual do topo da heap e o armazena em BRK_INICIAL e BRK_ATUAL
 
-    movq %rax, BRK_ATUAL
-    movq %rax, BRK_INICIAL
+  # Empilha rbp
+  pushq %rbp
+  movq %rsp, %rbp
 
-    popq %rbp
-    ret
+  # Retorna endereço atual de brk
+  movq $12, %rax              
+  movq $0 , %rdi
+  syscall
+
+  # Salva o valor atual de brk em BRK_INICIAL e BRK_ATUAL
+  movq %rax, BRK_INICIAL      
+  movq %rax, BRK_ATUAL
+
+  # Desempilha rbp
+  popq %rbp
+  ret
 
 dismiss_brk:
-# 
-    pushq %rbp
-    movq %rsp, %rbp
+# Executa a syscall de brk para restaurar ao endereço inicial da heap
 
-    movq $12, %rax              # Syscall para brk
-    movq BRK_INICIAL, %rdi      # Restaura o endereço de BRK_INICIAL para brk
-    syscall
+  # Empilha rbp 
+  pushq %rbp
+  movq %rsp, %rbp
 
-    popq %rbp
-    ret
+  # Restaura o endereço de brk para o endereço inicial da heap, salvo em BRK_INICIAL
+  movq $12, %rax             
+  movq BRK_INICIAL, %rdi
+  syscall
+
+  # Desempilha rbp
+  popq %rbp
+  ret
 
 memory_alloc:
-
 # BRK_INICIAL = setup_TOPO();
 
 # 1. Procura bloco livre com tamanho igual ou maior que a requisição
@@ -86,38 +73,34 @@ memory_free:
 # Marca um bloco ocupado como livre
 # vai direto no ponteiro q passou, e muda USO para livre
 
-# conectar os blocos livres
-# segue do BRK_INICIAL ate o BRK_ATUAL, juntando o proximo livre, com o livre que estamos lendo
-# tamanho temporario, conforme encontrar USO = 0 adicionar ao tamanho temporario, quando encontrar um USO = 1
-    # seta o tamanho do bloco original
-    pushq %rbp
-    movq %rsp, %rbp
+  # Empilha rbp
+  push %rbp
+  movq %rsp, %rbp
 
-    movq %rdi, %rbx
-    subq $16, %rbx # Seta flag de uso do bloco como livre 
-    movq $0, (%rbx)
+  # Compara se endereco passado é NULO
+  cmpq $0, %rdi
+  je exit
+  
+  # Compara se endereco passado é menor que o BRK_INICIAL  
+  cmpq BRK_INICIAL, %rdi
+  jl exit
 
-    # Ajusta os blocos livres
+  # Compara se Endereco passado é maior que o BRK_ATUAL
+  cmpq BRK_ATUAL, %rdi
+  jge exit
 
-    popq %rbp
-    ret
+  # Zera o USO do bloco
+  movq %rdi, %rax
+  subq $16, %rax
+  movq $0, %rax
 
+  # Desempilha rbp
+  popq %rbp
+  ret
 
+  exit:
+  movq $0, %rax
 
-print_heap:
-# Imprime o estado atual da memória
-# Percorre a heap, imprimindo o estado de cada bloco
-
-    pushq %rbp
-    movq %rsp, %rbp
-
-
-    movq BRK_ATUAL, %rax
-    movq BRK_INICIAL, %rbx
-
-        
-
-    call printf
-
-    popq %rbp
-    ret
+  # Desempilha rbp
+  popq %rbp
+  ret

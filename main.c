@@ -2,44 +2,50 @@
 #include "malloc.h"
 
 
-int main()
+int main() 
 {
 
-    void *a,*b,*c,*d,*e;
-
+    // void *a,*b,*c,*d,*e;
+    // printf("Teste de alocação de memória\n");
+    printf("Inicializando\n");
     setup_brk();
 
-    // a = (void *) memory_alloc(50);
-    printHeap();
+    void *p;
+
+    p = (void *) memory_alloc(100);
+    printf("%p\n",  p);
+    // printf("%lu\n",  p);
+    // print_heap();
 
     // b = (void *) memory_alloc(100);
-    printHeap();
+    // print_heap();
 
     // c = (void *) memory_alloc(200);
-    printHeap();
+    // print_heap();
 
     // d = (void *) memory_alloc(250);
-    printHeap();
+    // print_heap();
 
     // e = (void *) memory_alloc(300);
-    printHeap();
+    // print_heap();
 
     // memory_free(b);
-    printHeap();
+    // print_heap();
 
     // memory_free(d);
-    printHeap();
+    // print_heap();
 
     // memory_free(a);
-    printHeap();
+    // print_heap();
 
     // memory_free(c);
-    printHeap();
+    // print_heap();
 
     // memory_free(e);
-    // printHeap();
+    // print_heap();
 
     dismiss_brk();
+    // printf("Liberando\n");
 
     return 0;
 }
