@@ -1,8 +1,6 @@
 .section .data
 BRK_INICIAL: .quad 0
 BRK_ATUAL: .quad 0
-IN_USE: .string "+"
-NOT_IN_USE: .string "-"
 
 .section .text
 .global setup_brk
@@ -13,40 +11,24 @@ NOT_IN_USE: .string "-"
 .global print
 
 setup_brk:
-# Executa a syscall de brk para obter o endereço atual do topo da heap e o armazena em BRK_INICIAL e BRK_ATUAL
-
-  # Empilha rbp
-  pushq %rbp
-  movq %rsp, %rbp
-
-  # Retorna endereço atual de brk
-  movq $12, %rax              
-  movq $0 , %rdi
-  syscall
-
-  # Salva o valor atual de brk em BRK_INICIAL e BRK_ATUAL
-  movq %rax, BRK_INICIAL      
-  movq %rax, BRK_ATUAL
-
-  # Desempilha rbp
-  popq %rbp
-  ret
+  pushq   %rbp                  # Empilha Endereço Base
+  movq    %rsp, %rbp            # Atualiza ponteiro para o registro de ativação atual
+  movq    $12, %rax             # ID da syscall de brk
+  movq    $0 , %rdi             # Parametro da syscall ( 0, retorna a posição atual da heap)
+  syscall                       # Chamada o S.O
+  movq    %rax, BRK_INICIAL     # Salva valor de retorno da syscall em BRK_INICIAL
+  movq    %rax, BRK_ATUAL       # Salva valor de retorno da syscall em BRK_ATUAL
+  popq    %rbp                  # Desempilha Registro de Ativação e restaura rbp para o valor anterior
+  ret                           # Retorna
 
 dismiss_brk:
-# Executa a syscall de brk para restaurar ao endereço inicial da heap
-
-  # Empilha rbp 
-  pushq %rbp
-  movq %rsp, %rbp
-
-  # Restaura o endereço de brk para o endereço inicial da heap, salvo em BRK_INICIAL
-  movq $12, %rax             
-  movq BRK_INICIAL, %rdi
-  syscall
-
-  # Desempilha rbp
-  popq %rbp
-  ret
+  pushq   %rbp                  # Empilha Endereço Base
+  movq    %rsp, %rbp            # Atualiza ponteiro para o registro de ativação atual
+  movq    $12, %rax             # ID da syscall de brk
+  movq    BRK_INICIAL, %rdi     # Parametro da syscall(retorna a posição inicual da heap)
+  syscall                       # Chamada o S.O
+  popq    %rbp                  # Desempilha Registro de Ativação e restaura rbp para o valor anterior
+  ret                           # Retorna
 
 memory_alloc:
 # BRK_INICIAL = setup_TOPO();
@@ -70,37 +52,21 @@ memory_alloc:
 # sempre retornar o endereco correspondente, do novo bloco
 
 memory_free:
-# Marca um bloco ocupado como livre
-# vai direto no ponteiro q passou, e muda USO para livre
-
-  # Empilha rbp
-  push %rbp
-  movq %rsp, %rbp
-
-  # Compara se endereco passado é NULO
-  cmpq $0, %rdi
-  je exit
-  
-  # Compara se endereco passado é menor que o BRK_INICIAL  
-  cmpq BRK_INICIAL, %rdi
-  jl exit
-
-  # Compara se Endereco passado é maior que o BRK_ATUAL
-  cmpq BRK_ATUAL, %rdi
-  jge exit
-
-  # Zera o USO do bloco
-  movq %rdi, %rax
-  subq $16, %rax
-  movq $0, %rax
-
-  # Desempilha rbp
-  popq %rbp
-  ret
-
+  push    %rbp                  # Empilha Endereço Base
+  movq    %rsp, %rbp            # Atualiza ponteiro para o registro de ativação atual
+  movq    %rdi, %rbx            # Move o valor de endereço do parametro para %rbx
+  cmpq    $0, %rbx              # Compara se endereco passado é NULO
+  je      exit
+  cmpq    BRK_INICIAL, %rbx     # Compara se endereco passado é menor que o BRK_INICIAL
+  jl      exit
+  #call   get_brk               # Obtem o valor atual de brk
+  cmpq    %rax, %rbx            # Compara se Endereco passado é maior que o BRK_ATUAL
+  jg      exit                  
+  movq    $0, -16(%rdi)         # Zera o USO do bloco   
+  movq    $1, %rax              # Retorna 1, sucesso
+  popq    %rbp                  # Desempilha Registro de Ativação e restaura rbp para o valor anterior
+  ret                           # Retorna
   exit:
-  movq $0, %rax
-
-  # Desempilha rbp
-  popq %rbp
-  ret
+  movq    $0, %rax              # Retorna 0, falha
+  popq    %rbp                  # Desempilha Registro de Ativação e restaura rbp para o valor anterior
+  ret                           # Retorna
